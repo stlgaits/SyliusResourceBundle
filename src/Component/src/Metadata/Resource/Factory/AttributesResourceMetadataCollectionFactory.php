@@ -56,6 +56,12 @@ final class AttributesResourceMetadataCollectionFactory implements ResourceMetad
         $resources = [];
         $index = -1;
 
+        $hasAsResourceAttribute = array_reduce(
+            $attributes,
+            fn (bool $carry, \ReflectionAttribute $attr) => $carry || is_a($attr->getName(), AsResource::class, true),
+            false,
+        );
+
         foreach ($attributes as $attribute) {
             if (is_a($attribute->getName(), AsResource::class, true)) {
                 /** @var AsResource $resourceAttribute */
@@ -88,6 +94,10 @@ final class AttributesResourceMetadataCollectionFactory implements ResourceMetad
             }
 
             if (null === ($resources[$index] ?? null)) {
+                if ($hasAsResourceAttribute && !is_subclass_of($attribute->getName(), Operation::class)) {
+                    continue;
+                }
+
                 try {
                     $resourceConfiguration = $this->resourceRegistry->getByClass($resourceClass);
 
